@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trapping Rainwater Visualizer (SVG)</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 20px;
+      }
+      #input-section {
+        margin-bottom: 20px;
+      }
+      #visualization {
+        margin-top: 20px;
+        border: 1px solid #ccc;
+      }
+      #result {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Trapping Rainwater Problem Visualizer (SVG)</h1>
+    <div id="input-section">
+      <input
+        type="text"
+        id="block-heights"
+        placeholder="Enter block heights (e.g., 0,1,0,2,1)"
+        size="50"
+      />
+      <button onclick="visualizeRainwater()">Visualize</button>
+    </div>
+    <div id="visualization"></div>
+    <div id="result"></div>
+
+    <script>
+      function visualizeRainwater() {
+        const input = document.getElementById("block-heights").value;
+        const heights = input.split(",").map(Number);
+        const container = document.getElementById("visualization");
+        const result = document.getElementById("result");
+        container.innerHTML = "";
+        result.textContent = "";
+
+        if (heights.some(isNaN)) {
+          result.textContent =
+            "Please enter valid numbers separated by commas.";
+          return;
+        }
+
+        const n = heights.length;
+        const leftMax = Array(n).fill(0);
+        const rightMax = Array(n).fill(0);
+        let waterTrapped = 0;
+
+        leftMax[0] = heights[0];
+        for (let i = 1; i < n; i++) {
+          leftMax[i] = Math.max(leftMax[i - 1], heights[i]);
+        }
+
+        rightMax[n - 1] = heights[n - 1];
+        for (let i = n - 2; i >= 0; i--) {
+          rightMax[i] = Math.max(rightMax[i + 1], heights[i]);
+        }
+
+        for (let i = 0; i < n; i++) {
+          const trapped = Math.min(leftMax[i], rightMax[i]) - heights[i];
+          if (trapped > 0) waterTrapped += trapped;
+        }
+
+        const maxHeight = Math.max(...heights);
+        const svgHeight = 300;
+        const svgWidth = n * 40;
+        const unitHeight = svgHeight / (maxHeight + 2);
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", svgWidth);
+        svg.setAttribute("height", svgHeight);
+
+        for (let i = 0; i <= n; i++) {
+          const vLine = document.createElementNS(svgNS, "line");
+          vLine.setAttribute("x1", i * 40);
+          vLine.setAttribute("y1", 0);
+          vLine.setAttribute("x2", i * 40);
+          vLine.setAttribute("y2", svgHeight);
+          vLine.setAttribute("stroke", "black");
+          vLine.setAttribute("stroke-width", "0.5");
+          svg.appendChild(vLine);
+        }
+
+        for (let i = 0; i <= maxHeight + 1; i++) {
+          const hLine = document.createElementNS(svgNS, "line");
+          hLine.setAttribute("x1", 0);
+          hLine.setAttribute("y1", svgHeight - i * unitHeight);
+          hLine.setAttribute("x2", svgWidth);
+          hLine.setAttribute("y2", svgHeight - i * unitHeight);
+          hLine.setAttribute("stroke", "black");
+          hLine.setAttribute("stroke-width", "0.5");
+          svg.appendChild(hLine);
+        }
+
+        heights.forEach((height, i) => {
+          const rect = document.createElementNS(svgNS, "rect");
+          rect.setAttribute("x", i * 40);
+          rect.setAttribute("y", svgHeight - height * unitHeight);
+          rect.setAttribute("width", 40);
+          rect.setAttribute("height", height * unitHeight);
+          rect.setAttribute("fill", "rgba(50, 50, 50, 0.8)");
+          rect.setAttribute("stroke", "black");
+          svg.appendChild(rect);
+        });
+
+        heights.forEach((height, i) => {
+          const trapped = Math.min(leftMax[i], rightMax[i]) - height;
+          if (trapped > 0) {
+            const waterRect = document.createElementNS(svgNS, "rect");
+            waterRect.setAttribute("x", i * 40);
+            waterRect.setAttribute(
+              "y",
+              svgHeight - (height + trapped) * unitHeight
+            );
+            waterRect.setAttribute("width", 40);
+            waterRect.setAttribute("height", trapped * unitHeight);
+            waterRect.setAttribute("fill", "rgba(0, 150, 255, 0.6)");
+            waterRect.setAttribute("stroke", "black");
+            svg.appendChild(waterRect);
+          }
+        });
+
+        container.appendChild(svg);
+        result.textContent = `Total water trapped: ${waterTrapped} units`;
+      }
+    </script>
+  </body>
+</html>
